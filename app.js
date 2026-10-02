@@ -16,7 +16,7 @@
     terinstal: 'portal.terinstal'        // tanda portal pernah diinstal dari browser ini
   };
   const ID_HUB = 'hub';
-  const VERSI_KODE = '2.1.2';
+  const VERSI_KODE = '2.1.3';
 
   /* ===================== Utilitas ===================== */
   const $ = (s) => document.querySelector(s);
@@ -80,6 +80,44 @@
     return 'Selamat malam';
   }
   const layarLebar = () => window.matchMedia('(min-width: 900px)').matches;
+
+  /* ===================== Mode diagnosa (buka portal dengan ?diagnosa=1) ===================== */
+  // Menampilkan catatan kecil di pojok layar: ke mana ketukan mendarat. Tidak mengirim apa pun ke mana pun.
+  const DIAG = (() => {
+    try {
+      if (/[?&]diagnosa=1/.test(location.search)) sessionStorage.setItem('portal.diagnosa', '1');
+      if (/[?&]diagnosa=0/.test(location.search)) sessionStorage.removeItem('portal.diagnosa');
+      return sessionStorage.getItem('portal.diagnosa') === '1';
+    } catch (e) { return false; }
+  })();
+  const catatanDiag = [];
+  function diagnosa(teks) {
+    if (!DIAG) return;
+    const d = new Date();
+    catatanDiag.push(String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0') + ' ' + teks);
+    while (catatanDiag.length > 9) catatanDiag.shift();
+    let k = document.getElementById('kotak-diagnosa');
+    if (!k) { k = document.createElement('pre'); k.id = 'kotak-diagnosa'; document.body.append(k); }
+    k.textContent = catatanDiag.join('\n');
+  }
+  if (DIAG) {
+    const nama = (t) => {
+      if (!t || !t.tagName) return '?';
+      if (t.tagName === 'IFRAME') return 'BINGKAI ' + (t.title || '');
+      const b = t.closest('button, a');
+      if (b) return 'tombol ' + (b.id || b.getAttribute('aria-label') || b.textContent.trim().slice(0, 18));
+      return t.tagName.toLowerCase() + (t.id ? '#' + t.id : '') + (t.className && typeof t.className === 'string' ? '.' + t.className.split(' ')[0] : '');
+    };
+    document.addEventListener('pointerdown', (e) => diagnosa('ketuk portal: ' + nama(e.target)), true);
+    window.addEventListener('blur', () => setTimeout(() => {
+      const a = document.activeElement;
+      diagnosa(a && a.tagName === 'IFRAME' ? 'ketuk masuk ke ' + a.title : 'portal kehilangan fokus');
+    }, 0));
+    window.addEventListener('focus', () => diagnosa('fokus kembali ke portal'));
+    window.addEventListener('popstate', () => diagnosa('popstate'));
+    document.addEventListener('visibilitychange', () => diagnosa('layar: ' + document.visibilityState));
+    window.addEventListener('resize', () => diagnosa('ukuran: ' + innerWidth + '×' + innerHeight));
+  }
 
   /* ===================== Komunikasi dengan Hub (kontrak 5.2) ===================== */
   async function hub(aksi, data) {
@@ -357,21 +395,24 @@
 
   // Layar aplikasi tidak pernah di-display:none. Disembunyikan dengan visibility + inert,
   // supaya aplikasi yang sedang dimuat tetap punya ukuran dan tidak ada lapisan tak terlihat yang menangkap sentuhan.
+  // Bingkai aplikasi TIDAK PERNAH disembunyikan (tanpa display:none, visibility, pointer-events, atau inert).
+  // Beranda dan aplikasi hanya bertukar urutan tumpukan: yang aktif berada paling atas dan menutupi yang lain.
+  // Ini menghindari area sentuh bingkai yang "tersangkut" di Chrome Android.
   function aturMode(modeApp) {
-    const portal = $('#layar-portal');
-    portal.classList.toggle('mode-app', modeApp);
-    $('#layar-app').inert = !modeApp;
-    $('#layar-app').setAttribute('aria-hidden', String(!modeApp));
-    $('#beranda').inert = modeApp;
+    $('#layar-portal').classList.toggle('mode-app', modeApp);
+    $('#beranda').inert = modeApp;                 // beranda tidak berisi bingkai, aman dibuat inert
     $('#beranda').setAttribute('aria-hidden', String(modeApp));
+    $('#app-bilah').inert = !modeApp;              // hanya bilah atas, bukan bingkai
+    $('#wadah').setAttribute('aria-hidden', String(!modeApp));
+    diagnosa(modeApp ? 'mode: aplikasi' : 'mode: beranda');
   }
 
   function tampilkanBingkai(aktif) {
     Object.values(S.bingkai).forEach((x) => {
       const ya = x === aktif;
       x.f.classList.toggle('aktif', ya);
-      x.f.inert = !ya;
       x.f.tabIndex = ya ? 0 : -1;
+      x.f.setAttribute('aria-hidden', String(!ya));
     });
   }
 
@@ -385,17 +426,26 @@
     S.hidup = S.hidup.filter((x) => x !== id);
   }
 
-  // Meniru yang terjadi saat layar diputar: semua bingkai aplikasi diukur ulang sesaat,
-  // supaya browser memperbarui area sentuh bingkai yang baru disembunyikan atau ditampilkan.
-  function ukurUlangBingkai() {
-    const fs = Object.values(S.bingkai).map((b) => b.f);
-    if (!fs.length) return;
+  // Ukur ulang otomatis: meniru yang terjadi saat layar diputar.
+  // Seluruh area aplikasi diperkecil sesaat lalu dikembalikan, beberapa kali setelah perpindahan,
+  // supaya browser menghitung ulang area sentuh setiap aplikasi.
+  let timerUkur = [];
+  function ukurSekali() {
+    const w = $('#wadah');
+    if (!w || !Object.keys(S.bingkai).length) return;
     requestAnimationFrame(() => {
-      fs.forEach((f) => { f.style.width = 'calc(100% - 1px)'; });
+      w.classList.add('ukur-ulang');
+      void w.offsetWidth;   // paksa tata letak dihitung dengan ukuran kecil
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        fs.forEach((f) => { f.style.width = ''; });
+        w.classList.remove('ukur-ulang');
+        void w.offsetWidth;
       }));
     });
+  }
+  function ukurUlangBingkai() {
+    timerUkur.forEach(clearTimeout);
+    ukurSekali();
+    timerUkur = [350, 1200, 3000].map((ms) => setTimeout(ukurSekali, ms));
   }
 
   // Simpan hanya beberapa aplikasi terakhir agar HP tidak kehabisan memori.
@@ -488,6 +538,7 @@
     S.bingkai[id] = b;
     $('#wadah').append(f);
     tampilkanBingkai(b);
+    ukurUlangBingkai();
     muatBingkai(b, opsi.extra);
   }
 
@@ -516,6 +567,8 @@
     clearTimeout(b.timer);
     b.status = 'siap';
     segarkanPemuat();
+    diagnosa('termuat: ' + b.id);
+    ukurUlangBingkai();
     // Bila halaman menolak tampil di dalam bingkai, browser memuat halaman galat kosong.
     const kosong = () => {
       try { if (b.f.contentDocument) return false; } catch (e) { /* beda asal: lanjut periksa */ }
@@ -762,6 +815,7 @@
 
   function saatKembali() {
     if (document.visibilityState !== 'visible' || !S.sesi) return;
+    ukurUlangBingkai();
     if (Date.now() - S.terakhirMuat > 30000) muatData('kembali');
   }
   document.addEventListener('visibilitychange', saatKembali);
@@ -798,6 +852,7 @@
     let id = q.get('app');
     q.delete('app');
     q.delete('tiket');
+    q.delete('diagnosa');
     if (!id && location.hash.length > 1) { try { id = decodeURIComponent(location.hash.slice(1)); } catch (e) { id = null; } }
     if (id) S.tautanAwal = { id, extra: q.toString() };
     if (location.search || location.hash) history.replaceState(null, '', location.pathname);

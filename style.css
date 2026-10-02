@@ -171,7 +171,13 @@ svg { flex-shrink: 0; }
 .portal { height: 100%; }
 .sisi { display: none; }
 .konten { position: relative; height: 100%; overflow: hidden; }
-.beranda { height: 100%; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+/* Beranda dan layar aplikasi bertumpuk di area yang sama. Yang aktif di atas, yang lain tertutup. */
+.beranda {
+  position: absolute; inset: 0; z-index: 2;
+  overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+}
+.portal.mode-app .beranda { z-index: 0; }
 
 .kepala {
   position: relative; overflow: hidden;
@@ -250,12 +256,11 @@ svg { flex-shrink: 0; }
    Tidak pernah display:none: aplikasi yang sedang dimuat tetap punya ukuran,
    dan saat tersembunyi layar ini tidak menangkap sentuhan (visibility + inert). */
 .layar-app {
-  position: absolute; inset: 0; z-index: 5;
+  position: absolute; inset: 0; z-index: 1;
   display: flex; flex-direction: column;
   background: var(--permukaan);
-  visibility: hidden; pointer-events: none;
 }
-.portal.mode-app .layar-app { visibility: visible; pointer-events: auto; }
+.portal.mode-app .layar-app { z-index: 3; }
 .bilah {
   flex-shrink: 0; display: flex; align-items: center; gap: 2px;
   min-height: 56px; padding: env(safe-area-inset-top, 0px) 4px 0;
@@ -271,12 +276,12 @@ svg { flex-shrink: 0; }
 .tombol-bilah .teks { display: none; }
 .wadah { position: relative; flex: 1; min-height: 0; padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--permukaan); }
 .wadah iframe {
-  position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--permukaan);
-  visibility: hidden; pointer-events: none;
+  position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; border: 0; background: var(--permukaan);
 }
-.wadah iframe.aktif { visibility: inherit; pointer-events: inherit; }
+.wadah iframe.aktif { z-index: 2; }
+.wadah.ukur-ulang iframe { width: calc(100% - 2px); height: calc(100% - 2px); }
 .pemuat {
-  position: absolute; inset: 0; z-index: 2;
+  position: absolute; inset: 0; z-index: 3;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
   padding: 24px; background: var(--bg); text-align: center;
 }
@@ -312,6 +317,11 @@ svg { flex-shrink: 0; }
 .daftar-umum li:first-child { border-top: 0; padding-top: 4px; }
 .daftar-umum h3 { margin: 0; font-size: 16px; line-height: 1.35; }
 
+#kotak-diagnosa {
+  position: fixed; right: 6px; bottom: 6px; z-index: 70; max-width: 70vw; margin: 0;
+  padding: 6px 8px; border-radius: 8px; background: rgba(0,0,0,.78); color: #9FF5B5;
+  font: 11px/1.35 ui-monospace, monospace; white-space: pre-wrap; pointer-events: none;
+}
 .toast {
   position: fixed; left: 50%; z-index: 60;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);

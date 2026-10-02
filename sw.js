@@ -1,5 +1,5 @@
 // Naikkan versi ini setiap kali file portal diubah.
-const CACHE = 'portal-v5';
+const CACHE = 'portal-v6';
 const ASET = [
   './', './index.html', './style.css', './app.js', './config.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './favicon-48.png'
