@@ -8,7 +8,7 @@
  *           Salin dari Hub → Portal → Login & tiket.
  */
 window.PORTAL_KONFIG = {
-  HUB_URL: 'https://script.google.com/macros/s/GANTI_DENGAN_ID_HUB/exec',
+  HUB_URL: 'https://script.google.com/macros/s/AKfycbzQdUK3mVNG5qkiVwAw-pt4g9GCYmyqdTV9llwVpnkAteu8V1vwVytJRqcpzHK1N0Q3/exec',
 
   NAMA: 'Sahabat PPDS',          // nama portal (ubah juga "name" di manifest.webmanifest)
   VERSI: '2.0.0',
