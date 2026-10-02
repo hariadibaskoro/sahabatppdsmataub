@@ -12,11 +12,11 @@
     sesi: 'portal.sesi',                 // { sesi, sesiBerakhir } — PIN tidak pernah disimpan
     paket: 'portal.paket',               // salinan tampilan terakhir (tanpa tiket, tanpa sesi)
     ditutup: 'portal.pengumumanDitutup', // id pengumuman yang sudah ditutup
-    instalNanti: 'portal.instalNanti',   // waktu (ms) sampai ajakan instal boleh muncul lagi
+    instalHari: 'portal.instalHari',     // tanggal terakhir ajakan instal tampil (sekali sehari)
     terinstal: 'portal.terinstal'        // tanda portal pernah diinstal dari browser ini
   };
   const ID_HUB = 'hub';
-  const VERSI_KODE = '2.1.1';
+  const VERSI_KODE = '2.1.2';
 
   /* ===================== Utilitas ===================== */
   const $ = (s) => document.querySelector(s);
@@ -385,6 +385,19 @@
     S.hidup = S.hidup.filter((x) => x !== id);
   }
 
+  // Meniru yang terjadi saat layar diputar: semua bingkai aplikasi diukur ulang sesaat,
+  // supaya browser memperbarui area sentuh bingkai yang baru disembunyikan atau ditampilkan.
+  function ukurUlangBingkai() {
+    const fs = Object.values(S.bingkai).map((b) => b.f);
+    if (!fs.length) return;
+    requestAnimationFrame(() => {
+      fs.forEach((f) => { f.style.width = 'calc(100% - 1px)'; });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fs.forEach((f) => { f.style.width = ''; });
+      }));
+    });
+  }
+
   // Simpan hanya beberapa aplikasi terakhir agar HP tidak kehabisan memori.
   function catatHidup(id) {
     S.hidup = S.hidup.filter((x) => x !== id).concat(id);
@@ -463,7 +476,7 @@
 
     let b = S.bingkai[id];
     catatHidup(id);
-    if (b) { tampilkanBingkai(b); segarkanPemuat(); return; }   // sudah terbuka: tampilkan saja, tanpa memuat ulang
+    if (b) { tampilkanBingkai(b); segarkanPemuat(); ukurUlangBingkai(); return; }   // sudah terbuka: tampilkan saja, tanpa memuat ulang
 
     const f = el('iframe', {
       title: app.nama,
@@ -597,6 +610,7 @@
     document.title = K.NAMA;
     $('#sapaan').textContent = sapaan();
     tandaiAktif();
+    ukurUlangBingkai();
   }
   function keBeranda() {
     if (history.state && history.state.app) history.back();
@@ -756,7 +770,10 @@
 
   /* ===================== Navigasi ===================== */
   $('#menu-beranda').addEventListener('click', keBeranda);
-  $('#app-kembali').addEventListener('click', (e) => { e.currentTarget.blur(); keBeranda(); });
+  $('#app-kembali').addEventListener('click', (e) => {
+    e.currentTarget.blur();
+    setTimeout(keBeranda, 150);
+  });
   $('#app-muat').addEventListener('click', muatUlangAktif);
   $('#app-tab').addEventListener('click', () => { if (S.aktif) bukaTabBaru(S.aktif); });
   $('#app-salin').addEventListener('click', () => { if (S.aktif) salinLink(S.aktif); });
@@ -794,7 +811,10 @@
   }
 
   /* ===================== Instal ke perangkat ===================== */
-  const TUJUH_HARI = 7 * 24 * 3600 * 1000;
+  const hariIni = () => {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  };
   let promptPasang = null;
   let ajakanDiminta = false;   // sudah login, ajakan boleh muncul di pemuatan halaman ini
   let ajakanSudah = false;     // ajakan sudah tampil di pemuatan halaman ini
@@ -817,7 +837,7 @@
   }
   function bolehAjak() {
     if (!S.sesi || sudahTerpasang() || simpan.ambil(KUNCI.terinstal)) return false;
-    if (Date.now() < (Number(simpan.ambil(KUNCI.instalNanti)) || 0)) return false;
+    if (simpan.ambil(KUNCI.instalHari) === hariIni()) return false;   // sudah tampil hari ini
     return ponsel || !!promptPasang;   // di laptop hanya bila browser bisa menginstal
   }
   function ajakInstal() {
@@ -826,6 +846,8 @@
     if (document.querySelector('dialog[open]')) { ajakanTertunda = true; return; }
     ajakanTertunda = false;
     ajakanSudah = true;
+    simpan.taruh(KUNCI.instalHari, hariIni());
+    simpan.hapus('portal.instalNanti');   // sisa versi 2.1.0
     isiAjakan();
     $('#dlg-instal').showModal();
   }
@@ -833,7 +855,6 @@
     if (ajakanTertunda) setTimeout(ajakInstal, 250);
   }
   function nantiSaja() {
-    simpan.taruh(KUNCI.instalNanti, Date.now() + TUJUH_HARI);
     if ($('#dlg-instal').open) $('#dlg-instal').close();
   }
   async function jalankanInstal() {
@@ -844,7 +865,6 @@
     let hasil = null;
     try { hasil = await p.userChoice; } catch (e) { /* abaikan */ }
     if ($('#dlg-instal').open) $('#dlg-instal').close();
-    if (!hasil || hasil.outcome !== 'accepted') simpan.taruh(KUNCI.instalNanti, Date.now() + TUJUH_HARI);
     perbaruiTombolInstal();
   }
   window.addEventListener('beforeinstallprompt', (e) => {
