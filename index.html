@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portal</title>
+<meta name="theme-color" content="#12304A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon-48.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+
+<!-- Ikon yang dipakai berulang -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-kiri" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-muat" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></g></symbol>
+    <symbol id="i-tab" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></g></symbol>
+    <symbol id="i-tautan" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></g></symbol>
+    <symbol id="i-rumah" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></g></symbol>
+    <symbol id="i-umum" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></g></symbol>
+    <symbol id="i-keluar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></g></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></g></symbol>
+    <symbol id="i-silang" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></g></symbol>
+    <symbol id="i-iris" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="72" fill="#1F7A8C"/>
+      <circle cx="100" cy="100" r="47" fill="none" stroke="#4B98A6" stroke-width="44" stroke-dasharray="1.2 4"/>
+      <circle cx="100" cy="100" r="37" fill="none" stroke="#E0A43A" stroke-width="3"/>
+      <circle cx="100" cy="100" r="25" fill="#0A1824"/>
+      <circle cx="110" cy="90" r="6" fill="#fff"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ============ LAYAR AWAL ============ -->
+<div id="layar-awal" class="layar-awal">
+  <svg class="awal-iris" aria-hidden="true"><use href="#i-iris"/></svg>
+  <div class="putar" id="awal-putar" aria-hidden="true"></div>
+  <p id="awal-teks" role="status">Memuat portal…</p>
+  <div class="awal-aksi" id="awal-aksi" hidden>
+    <button type="button" class="tombol utama" id="awal-coba">Coba lagi</button>
+    <button type="button" class="tombol" id="awal-lain">Masuk dengan nomor lain</button>
+  </div>
+</div>
+
+<!-- ============ LOGIN ============ -->
+<main id="layar-login" class="layar-login" hidden>
+  <div class="login-kartu">
+    <header class="login-kepala">
+      <svg class="login-iris" aria-hidden="true"><use href="#i-iris"/></svg>
+      <h1 class="login-judul nama-portal">Portal</h1>
+      <p class="login-sub">Masuk sekali untuk semua aplikasi.</p>
+    </header>
+
+    <div class="login-isi">
+      <div class="pesan" id="login-pesan" role="alert" hidden></div>
+
+      <form id="form-hp" class="form" novalidate>
+        <label class="label" for="in-hp">Nomor HP</label>
+        <input class="isian" id="in-hp" name="hp" type="tel" inputmode="numeric" autocomplete="tel" placeholder="08…" required>
+        <button type="submit" class="tombol utama lebar">Lanjut</button>
+      </form>
+
+      <form id="form-pin" class="form" novalidate hidden>
+        <div class="siapa">
+          <span>Masuk sebagai <strong id="pin-hp"></strong></span>
+          <button type="button" class="tautan" data-ganti-nomor>Ganti nomor</button>
+        </div>
+        <label class="label" for="in-pin">PIN</label>
+        <input class="isian" id="in-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" required>
+        <button type="submit" class="tombol utama lebar">Masuk</button>
+      </form>
+
+      <form id="form-ganti" class="form" novalidate hidden>
+        <div class="siapa">
+          <span>Buat PIN baru untuk <strong id="ganti-hp"></strong></span>
+          <button type="button" class="tautan" data-ganti-nomor>Ganti nomor</button>
+        </div>
+        <label class="label" for="in-pin-baru">PIN baru</label>
+        <input class="isian" id="in-pin-baru" type="password" inputmode="numeric" autocomplete="off" required>
+        <p class="bantu">4–12 angka, berbeda dari PIN sementara.</p>
+        <label class="label" for="in-pin-ulang">Ulangi PIN baru</label>
+        <input class="isian" id="in-pin-ulang" type="password" inputmode="numeric" autocomplete="off" required>
+        <button type="submit" class="tombol utama lebar">Simpan PIN dan masuk</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- ============ PORTAL ============ -->
+<div id="layar-portal" class="portal" hidden>
+
+  <aside class="sisi" aria-label="Navigasi portal">
+    <div class="sisi-atas">
+      <button type="button" class="tombol-ikon sisi-lipat" id="sisi-lipat" aria-label="Lipat menu" aria-expanded="true">
+        <svg><use href="#i-menu"/></svg>
+      </button>
+      <div class="merek label-sisi">
+        <svg class="merek-iris" aria-hidden="true"><use href="#i-iris"/></svg>
+        <div>
+          <div class="merek-nama nama-portal">Portal</div>
+          <div class="merek-alamat" id="merek-alamat"></div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sisi-nav">
+      <button type="button" class="menu-item" id="menu-beranda" title="Beranda">
+        <svg class="menu-svg"><use href="#i-rumah"/></svg>
+        <span class="label-sisi">Beranda</span>
+      </button>
+      <div class="sisi-judul label-sisi">Aplikasi</div>
+      <div id="sisi-app" class="sisi-app"></div>
+    </nav>
+
+    <div class="sisi-bawah">
+      <button type="button" class="menu-item" id="sisi-umum" title="Pengumuman">
+        <span class="menu-ikon-wadah">
+          <svg class="menu-svg"><use href="#i-umum"/></svg>
+          <span class="lencana" data-lencana hidden></span>
+        </span>
+        <span class="label-sisi">Pengumuman</span>
+      </button>
+      <div class="akun">
+        <span class="avatar" data-avatar></span>
+        <div class="label-sisi akun-teks">
+          <div class="akun-nama" data-nama></div>
+          <div class="akun-sub" data-sub></div>
+        </div>
+      </div>
+      <button type="button" class="menu-item" id="sisi-keluar" title="Keluar">
+        <svg class="menu-svg"><use href="#i-keluar"/></svg>
+        <span class="label-sisi">Keluar</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="konten">
+    <!-- Beranda -->
+    <section id="beranda" class="beranda">
+      <header class="kepala">
+        <svg class="kepala-iris" aria-hidden="true"><use href="#i-iris"/></svg>
+        <div class="kepala-baris">
+          <span class="kepala-merek nama-portal">Portal</span>
+          <div class="kepala-aksi">
+            <button type="button" class="tombol-kepala" id="kepala-umum" aria-label="Pengumuman">
+              <svg><use href="#i-umum"/></svg>
+              <span class="lencana" data-lencana hidden></span>
+            </button>
+            <button type="button" class="tombol-kepala" id="kepala-akun" aria-label="Akun dan keluar">
+              <span class="avatar" data-avatar></span>
+            </button>
+          </div>
+        </div>
+        <p class="sapaan" id="sapaan">Selamat datang</p>
+        <h1 class="kepala-nama" data-nama></h1>
+        <p class="kepala-sub" data-sub></p>
+      </header>
+
+      <div class="isi-beranda">
+        <button type="button" class="kartu-umum" id="kartu-umum" hidden></button>
+        <h2 class="judul-bagian">Aplikasi</h2>
+        <ul class="rak" id="rak" aria-label="Daftar aplikasi"></ul>
+        <p class="kosong" id="rak-kosong" hidden>Belum ada aplikasi untuk akun Anda. Hubungi admin Hub bila ini keliru.</p>
+
+        <div class="bawah">
+          <button type="button" class="tombol" id="pasang" hidden>Pasang portal di perangkat ini</button>
+          <p class="petunjuk-ios" id="petunjuk-ios" hidden>Untuk memasang di iPhone: ketuk tombol Bagikan di Safari, lalu pilih “Tambah ke Layar Utama”.</p>
+          <p class="versi" id="versi"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layar aplikasi -->
+    <section id="layar-app" class="layar-app" hidden>
+      <div class="bilah">
+        <button type="button" class="tombol-ikon bilah-kembali" id="app-kembali" aria-label="Kembali ke beranda">
+          <svg><use href="#i-kiri"/></svg>
+        </button>
+        <h2 class="bilah-judul" id="app-judul"></h2>
+        <div class="bilah-aksi">
+          <button type="button" class="tombol-bilah" id="app-muat" aria-label="Muat ulang">
+            <svg><use href="#i-muat"/></svg><span class="teks">Muat ulang</span>
+          </button>
+          <button type="button" class="tombol-bilah" id="app-tab" aria-label="Buka di tab baru">
+            <svg><use href="#i-tab"/></svg><span class="teks">Buka di tab baru</span>
+          </button>
+          <button type="button" class="tombol-bilah" id="app-salin" aria-label="Salin link">
+            <svg><use href="#i-tautan"/></svg><span class="teks">Salin link</span>
+          </button>
+        </div>
+      </div>
+      <div class="wadah" id="wadah">
+        <div class="pemuat" id="pemuat" hidden>
+          <div class="putar" id="pemuat-putar" aria-hidden="true"></div>
+          <p id="pemuat-teks" role="status"></p>
+          <div class="pemuat-aksi" id="pemuat-aksi"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============ DIALOG ============ -->
+<dialog id="dlg-umum" class="dialog" aria-labelledby="umum-judul">
+  <div class="dialog-isi">
+    <p class="umum-label"><svg><use href="#i-umum"/></svg><span id="umum-urutan">Pengumuman</span></p>
+    <h2 class="dialog-judul" id="umum-judul"></h2>
+    <p class="umum-waktu" id="umum-waktu"></p>
+    <div class="umum-teks" id="umum-isi"></div>
+  </div>
+  <div class="dialog-aksi">
+    <button type="button" class="tombol utama" id="umum-tutup">Tutup</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-semua" class="dialog" aria-labelledby="semua-judul">
+  <div class="dialog-kepala">
+    <h2 class="dialog-judul" id="semua-judul">Pengumuman aktif</h2>
+    <button type="button" class="tombol-ikon" id="semua-tutup" aria-label="Tutup"><svg><use href="#i-silang"/></svg></button>
+  </div>
+  <div class="dialog-isi" id="semua-isi"></div>
+</dialog>
+
+<dialog id="dlg-keluar" class="dialog kecil" aria-labelledby="keluar-judul">
+  <div class="dialog-isi">
+    <h2 class="dialog-judul" id="keluar-judul">Keluar dari portal?</h2>
+    <p class="dialog-teks" id="keluar-siapa"></p>
+    <p class="dialog-teks">Pilih “semua perangkat” bila HP atau laptop Anda yang lain juga sedang masuk ke portal.</p>
+  </div>
+  <div class="dialog-aksi bertumpuk">
+    <button type="button" class="tombol utama" data-keluar="ini">Keluar dari perangkat ini</button>
+    <button type="button" class="tombol" data-keluar="semua">Keluar dari semua perangkat</button>
+    <button type="button" class="tombol polos" data-keluar="batal">Batal</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+</body>
+</html>
