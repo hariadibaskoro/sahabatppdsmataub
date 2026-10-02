@@ -165,9 +165,13 @@ svg { flex-shrink: 0; }
 .pesan.info { background: var(--info-bg); color: var(--info); }
 
 /* ===================== Portal: susunan HP ===================== */
-.portal { min-height: 100%; }
+/* HP memakai susunan yang sama dengan tampilan lebar (landscape), yang terbukti tidak macet:
+   layar aplikasi berposisi absolute di dalam .konten, bukan position: fixed di atas seluruh halaman,
+   dan beranda punya area gulir sendiri. */
+.portal { height: 100%; }
 .sisi { display: none; }
-.konten { min-height: 100%; }
+.konten { position: relative; height: 100%; overflow: hidden; }
+.beranda { height: 100%; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 
 .kepala {
   position: relative; overflow: hidden;
@@ -242,17 +246,16 @@ svg { flex-shrink: 0; }
 .petunjuk-ios { margin: 0; max-width: 34ch; font-size: 13px; line-height: 1.5; color: var(--redup); }
 .versi { margin: 0; font-size: 12px; color: var(--redup); }
 
-/* Layar aplikasi (HP: layar penuh).
+/* Layar aplikasi (menutupi area konten).
    Tidak pernah display:none: aplikasi yang sedang dimuat tetap punya ukuran,
    dan saat tersembunyi layar ini tidak menangkap sentuhan (visibility + inert). */
 .layar-app {
-  position: fixed; inset: 0; z-index: 20;
+  position: absolute; inset: 0; z-index: 5;
   display: flex; flex-direction: column;
   background: var(--permukaan);
   visibility: hidden; pointer-events: none;
 }
 .portal.mode-app .layar-app { visibility: visible; pointer-events: auto; }
-html.kunci-gulir, html.kunci-gulir body { overflow: hidden; }
 .bilah {
   flex-shrink: 0; display: flex; align-items: center; gap: 2px;
   min-height: 56px; padding: env(safe-area-inset-top, 0px) 4px 0;
@@ -375,8 +378,7 @@ html.kunci-gulir, html.kunci-gulir body { overflow: hidden; }
   .portal.ringkas:not(.sisi-buka) .akun { justify-content: center; padding: 8px 0; }
   .portal.ringkas:not(.sisi-buka) .sisi-atas { justify-content: center; }
 
-  .konten { position: relative; min-height: 0; overflow: hidden; }
-  .beranda { height: 100%; overflow: auto; }
+  .konten { min-height: 0; }
 
   .kepala { padding: 40px 44px 8px; background: none; color: var(--teks); }
   .kepala-iris, .kepala-baris { display: none; }
@@ -398,8 +400,6 @@ html.kunci-gulir, html.kunci-gulir body { overflow: hidden; }
   .ubin-nama { margin-top: 0; font-size: 16px; }
   .bawah { align-items: flex-start; text-align: left; }
 
-  .layar-app { position: absolute; inset: 0; z-index: 5; }
-  html.kunci-gulir, html.kunci-gulir body { overflow: visible; }
   .bilah { min-height: 60px; padding: 0 16px 0 24px; gap: 8px; background: var(--permukaan); color: var(--teks); border-bottom: 1px solid var(--garis); }
   .bilah-kembali { display: none; }
   .bilah-judul { margin: 0; font-size: 17px; font-weight: 700; }

@@ -16,7 +16,7 @@
     terinstal: 'portal.terinstal'        // tanda portal pernah diinstal dari browser ini
   };
   const ID_HUB = 'hub';
-  const VERSI_KODE = '2.1.0';
+  const VERSI_KODE = '2.1.1';
 
   /* ===================== Utilitas ===================== */
   const $ = (s) => document.querySelector(s);
@@ -360,7 +360,6 @@
   function aturMode(modeApp) {
     const portal = $('#layar-portal');
     portal.classList.toggle('mode-app', modeApp);
-    document.documentElement.classList.toggle('kunci-gulir', modeApp);
     $('#layar-app').inert = !modeApp;
     $('#layar-app').setAttribute('aria-hidden', String(!modeApp));
     $('#beranda').inert = modeApp;
@@ -757,7 +756,7 @@
 
   /* ===================== Navigasi ===================== */
   $('#menu-beranda').addEventListener('click', keBeranda);
-  $('#app-kembali').addEventListener('click', keBeranda);
+  $('#app-kembali').addEventListener('click', (e) => { e.currentTarget.blur(); keBeranda(); });
   $('#app-muat').addEventListener('click', muatUlangAktif);
   $('#app-tab').addEventListener('click', () => { if (S.aktif) bukaTabBaru(S.aktif); });
   $('#app-salin').addEventListener('click', () => { if (S.aktif) salinLink(S.aktif); });
