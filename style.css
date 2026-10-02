@@ -242,12 +242,17 @@ svg { flex-shrink: 0; }
 .petunjuk-ios { margin: 0; max-width: 34ch; font-size: 13px; line-height: 1.5; color: var(--redup); }
 .versi { margin: 0; font-size: 12px; color: var(--redup); }
 
-/* Layar aplikasi (HP: layar penuh) */
+/* Layar aplikasi (HP: layar penuh).
+   Tidak pernah display:none: aplikasi yang sedang dimuat tetap punya ukuran,
+   dan saat tersembunyi layar ini tidak menangkap sentuhan (visibility + inert). */
 .layar-app {
   position: fixed; inset: 0; z-index: 20;
   display: flex; flex-direction: column;
   background: var(--permukaan);
+  visibility: hidden; pointer-events: none;
 }
+.portal.mode-app .layar-app { visibility: visible; pointer-events: auto; }
+html.kunci-gulir, html.kunci-gulir body { overflow: hidden; }
 .bilah {
   flex-shrink: 0; display: flex; align-items: center; gap: 2px;
   min-height: 56px; padding: env(safe-area-inset-top, 0px) 4px 0;
@@ -262,8 +267,11 @@ svg { flex-shrink: 0; }
 .tombol-bilah svg { width: 21px; height: 21px; }
 .tombol-bilah .teks { display: none; }
 .wadah { position: relative; flex: 1; min-height: 0; padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--permukaan); }
-.wadah iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: none; background: var(--permukaan); }
-.wadah iframe.aktif { display: block; }
+.wadah iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--permukaan);
+  visibility: hidden; pointer-events: none;
+}
+.wadah iframe.aktif { visibility: inherit; pointer-events: inherit; }
 .pemuat {
   position: absolute; inset: 0; z-index: 2;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
@@ -292,6 +300,10 @@ svg { flex-shrink: 0; }
 .umum-label svg { width: 18px; height: 18px; }
 .umum-waktu { margin: 6px 0 0; font-size: 13px; color: var(--redup); }
 .umum-teks { margin-top: 14px; white-space: pre-line; line-height: 1.6; overflow-wrap: anywhere; }
+.instal-ikon { display: block; width: 56px; height: 56px; margin-bottom: 14px; border-radius: 14px; }
+.langkah { margin: 16px 0 0; padding-left: 22px; line-height: 1.6; }
+.langkah li + li { margin-top: 6px; }
+.langkah-ikon { width: 18px; height: 18px; vertical-align: -3px; color: var(--aksen); }
 .daftar-umum { list-style: none; margin: 0; padding: 0; }
 .daftar-umum li { padding: 16px 0; border-top: 1px solid var(--garis); }
 .daftar-umum li:first-child { border-top: 0; padding-top: 4px; }
@@ -304,6 +316,7 @@ svg { flex-shrink: 0; }
   width: max-content; max-width: calc(100% - 32px);
   padding: 12px 18px; border-radius: 14px;
   background: #0A1824; color: #FFFFFF; font-size: 14px; line-height: 1.45;
+  pointer-events: none;
 }
 
 /* ===================== Laptop / PC ===================== */
@@ -362,7 +375,8 @@ svg { flex-shrink: 0; }
   .portal.ringkas:not(.sisi-buka) .akun { justify-content: center; padding: 8px 0; }
   .portal.ringkas:not(.sisi-buka) .sisi-atas { justify-content: center; }
 
-  .konten { min-height: 0; overflow: auto; }
+  .konten { position: relative; min-height: 0; overflow: hidden; }
+  .beranda { height: 100%; overflow: auto; }
 
   .kepala { padding: 40px 44px 8px; background: none; color: var(--teks); }
   .kepala-iris, .kepala-baris { display: none; }
@@ -384,7 +398,8 @@ svg { flex-shrink: 0; }
   .ubin-nama { margin-top: 0; font-size: 16px; }
   .bawah { align-items: flex-start; text-align: left; }
 
-  .layar-app { position: relative; inset: auto; z-index: auto; height: 100%; }
+  .layar-app { position: absolute; inset: 0; z-index: 5; }
+  html.kunci-gulir, html.kunci-gulir body { overflow: visible; }
   .bilah { min-height: 60px; padding: 0 16px 0 24px; gap: 8px; background: var(--permukaan); color: var(--teks); border-bottom: 1px solid var(--garis); }
   .bilah-kembali { display: none; }
   .bilah-judul { margin: 0; font-size: 17px; font-weight: 700; }

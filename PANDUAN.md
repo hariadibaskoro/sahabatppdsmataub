@@ -24,6 +24,8 @@ Repo ini publik. **Jangan menaruh kunci, PIN, atau rahasia apa pun di file mana 
 - **Aplikasi yang belum mengizinkan tampil di dalam portal:** setelah ±15 detik (atau lebih cepat bila terdeteksi), muncul tombol "Buka di tab baru".
 - **Pengumuman:** muncul sebagai pop-up saat portal dibuka. Yang sudah ditutup tidak muncul lagi di perangkat itu. Semua pengumuman aktif bisa dibaca ulang lewat tombol pengumuman.
 - **Data dari Hub** dimuat ulang saat portal dibuka kembali dan tiap ±15 menit.
+- **Aplikasi yang tetap hidup** dibatasi 3 yang terakhir dibuka, supaya HP tidak kehabisan memori. Aplikasi yang lebih lama dimuat ulang saat dibuka lagi. Batas ini bisa diubah dengan menambah `MAKS_APP_HIDUP: 3` di `config.js`.
+- **Ajakan instal** muncul setelah login di perangkat yang belum menginstal. "Nanti saja" menyembunyikannya 7 hari. Tidak muncul bila portal dibuka sebagai aplikasi terinstal. Di iPhone, isinya petunjuk Bagikan → Tambahkan ke Layar Utama.
 
 ## Mengubah portal
-Edit file di GitHub (ikon pensil → Commit). Bila mengubah `index.html`, `style.css`, `app.js`, atau `config.js`, naikkan juga angka di `sw.js` (`portal-v2` → `portal-v3`).
+Edit file di GitHub (ikon pensil → Commit). Bila mengubah `index.html`, `style.css`, `app.js`, atau `config.js`, naikkan juga angka di `sw.js` (mis. `portal-v3` → `portal-v4`).

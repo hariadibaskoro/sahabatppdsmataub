@@ -5,15 +5,18 @@
   'use strict';
 
   const K = Object.assign(
-    { HUB_URL: '', NAMA: 'Portal', VERSI: '', MUAT_ULANG_MENIT: 15, BATAS_TAMPIL_DETIK: 15 },
+    { HUB_URL: '', NAMA: 'Portal', VERSI: '', MUAT_ULANG_MENIT: 15, BATAS_TAMPIL_DETIK: 15, MAKS_APP_HIDUP: 3 },
     window.PORTAL_KONFIG || {}
   );
   const KUNCI = {
     sesi: 'portal.sesi',                 // { sesi, sesiBerakhir } — PIN tidak pernah disimpan
     paket: 'portal.paket',               // salinan tampilan terakhir (tanpa tiket, tanpa sesi)
-    ditutup: 'portal.pengumumanDitutup'  // id pengumuman yang sudah ditutup
+    ditutup: 'portal.pengumumanDitutup', // id pengumuman yang sudah ditutup
+    instalNanti: 'portal.instalNanti',   // waktu (ms) sampai ajakan instal boleh muncul lagi
+    terinstal: 'portal.terinstal'        // tanda portal pernah diinstal dari browser ini
   };
   const ID_HUB = 'hub';
+  const VERSI_KODE = '2.1.0';
 
   /* ===================== Utilitas ===================== */
   const $ = (s) => document.querySelector(s);
@@ -110,6 +113,7 @@
     terpakai: new Set(),
     aktif: null,
     bingkai: {},
+    hidup: [],          // id aplikasi yang tetap hidup, terlama di depan
     terakhirMuat: 0,
     sedangMuat: null,
     tautanAwal: null,
@@ -225,6 +229,7 @@
     tampilPortal();
     bukaTautanAwal();
     tampilkanPopup();
+    ajakInstal();
   }
 
   /* ===================== Paket portal ===================== */
@@ -247,16 +252,16 @@
   function bersihkanLokal() {
     simpan.hapus(KUNCI.sesi);
     simpan.hapus(KUNCI.paket);
-    Object.values(S.bingkai).forEach((b) => { clearTimeout(b.timer); clearTimeout(b.cek); b.f.remove(); });
+    Object.keys(S.bingkai).forEach(tutupBingkai);
     Object.assign(S, {
       sesi: null, sesiBerakhir: 0, pengguna: null, aplikasi: [], pengumuman: [],
-      tiket: {}, tiketBerakhir: 0, aktif: null, bingkai: {}, terakhirMuat: 0
+      tiket: {}, tiketBerakhir: 0, aktif: null, bingkai: {}, hidup: [], terakhirMuat: 0
     });
     S.terpakai.clear();
     antrean = [];
     $$('dialog[open]').forEach((d) => d.close());
-    $('#layar-app').hidden = true;
-    $('#beranda').hidden = false;
+    $('#pemuat').hidden = true;
+    aturMode(false);
     $('#layar-portal').classList.remove('ringkas', 'sisi-buka');
   }
 
@@ -350,6 +355,44 @@
     $('#menu-beranda').setAttribute('aria-current', S.aktif ? 'false' : 'page');
   }
 
+  // Layar aplikasi tidak pernah di-display:none. Disembunyikan dengan visibility + inert,
+  // supaya aplikasi yang sedang dimuat tetap punya ukuran dan tidak ada lapisan tak terlihat yang menangkap sentuhan.
+  function aturMode(modeApp) {
+    const portal = $('#layar-portal');
+    portal.classList.toggle('mode-app', modeApp);
+    document.documentElement.classList.toggle('kunci-gulir', modeApp);
+    $('#layar-app').inert = !modeApp;
+    $('#layar-app').setAttribute('aria-hidden', String(!modeApp));
+    $('#beranda').inert = modeApp;
+    $('#beranda').setAttribute('aria-hidden', String(modeApp));
+  }
+
+  function tampilkanBingkai(aktif) {
+    Object.values(S.bingkai).forEach((x) => {
+      const ya = x === aktif;
+      x.f.classList.toggle('aktif', ya);
+      x.f.inert = !ya;
+      x.f.tabIndex = ya ? 0 : -1;
+    });
+  }
+
+  function tutupBingkai(id) {
+    const b = S.bingkai[id];
+    if (!b) return;
+    clearTimeout(b.timer); clearTimeout(b.cek);
+    b.f.src = 'about:blank';   // hentikan skripnya dulu agar memori segera lepas
+    b.f.remove();
+    delete S.bingkai[id];
+    S.hidup = S.hidup.filter((x) => x !== id);
+  }
+
+  // Simpan hanya beberapa aplikasi terakhir agar HP tidak kehabisan memori.
+  function catatHidup(id) {
+    S.hidup = S.hidup.filter((x) => x !== id).concat(id);
+    const maks = Math.max(1, Number(K.MAKS_APP_HIDUP) || 3);
+    while (S.hidup.length > maks) tutupBingkai(S.hidup[0]);
+  }
+
   function tampilPortal() {
     tampilLayar('portal');
     if (!S.aktif) tampilBeranda({ tanpaRiwayat: true });
@@ -404,8 +447,7 @@
     S.aktif = id;
     $('#app-judul').textContent = app.nama;
     document.title = app.nama + ' – ' + K.NAMA;
-    $('#beranda').hidden = true;
-    $('#layar-app').hidden = false;
+    aturMode(true);
     const portal = $('#layar-portal');
     portal.classList.add('ringkas');
     portal.classList.remove('sisi-buka');
@@ -421,8 +463,8 @@
     }
 
     let b = S.bingkai[id];
-    Object.values(S.bingkai).forEach((x) => x.f.classList.toggle('aktif', x === b));
-    if (b) { segarkanPemuat(); return; }   // sudah pernah dibuka: tampilkan saja, tanpa memuat ulang
+    catatHidup(id);
+    if (b) { tampilkanBingkai(b); segarkanPemuat(); return; }   // sudah terbuka: tampilkan saja, tanpa memuat ulang
 
     const f = el('iframe', {
       title: app.nama,
@@ -433,7 +475,7 @@
     f.addEventListener('load', () => saatTermuat(b));
     S.bingkai[id] = b;
     $('#wadah').append(f);
-    f.classList.add('aktif');
+    tampilkanBingkai(b);
     muatBingkai(b, opsi.extra);
   }
 
@@ -463,13 +505,16 @@
     b.status = 'siap';
     segarkanPemuat();
     // Bila halaman menolak tampil di dalam bingkai, browser memuat halaman galat kosong.
+    const kosong = () => {
+      try { if (b.f.contentDocument) return false; } catch (e) { /* beda asal: lanjut periksa */ }
+      try { return b.f.contentWindow.length === 0; } catch (e) { return false; }
+    };
     b.cek = setTimeout(() => {
-      if (b.status !== 'siap') return;
-      try { if (b.f.contentDocument) return; } catch (e) { /* beda asal: lanjut periksa */ }
-      let jumlah = 1;
-      try { jumlah = b.f.contentWindow.length; } catch (e) { /* abaikan */ }
-      if (jumlah === 0) { b.status = 'tolak'; segarkanPemuat(); }
-    }, 2500);
+      if (b.status !== 'siap' || !kosong()) return;
+      b.cek = setTimeout(() => {
+        if (b.status === 'siap' && kosong()) { b.status = 'tolak'; segarkanPemuat(); }
+      }, 4000);
+    }, 3000);
   }
 
   function segarkanPemuat() {
@@ -545,8 +590,8 @@
     opsi = opsi || {};
     S.aktif = null;
     $('#pemuat').hidden = true;
-    $('#layar-app').hidden = true;
-    $('#beranda').hidden = false;
+    aturMode(false);
+    tampilkanBingkai(null);
     $('#layar-portal').classList.remove('ringkas', 'sisi-buka');
     $('#sisi-lipat').setAttribute('aria-expanded', 'true');
     $('#sisi-lipat').setAttribute('aria-label', 'Lipat menu');
@@ -562,10 +607,7 @@
   function rapikanBingkai() {
     Object.keys(S.bingkai).forEach((id) => {
       if (cariApp(id)) return;
-      const b = S.bingkai[id];
-      clearTimeout(b.timer); clearTimeout(b.cek);
-      b.f.remove();
-      delete S.bingkai[id];
+      tutupBingkai(id);
       if (S.aktif === id) { tampilBeranda(); toast('Akses ke aplikasi itu sudah tidak tersedia.'); }
     });
   }
@@ -608,7 +650,7 @@
   }
   function tampilBerikut() {
     const dlg = $('#dlg-umum');
-    if (!antrean.length) { totalAntrean = 0; if (dlg.open) dlg.close(); renderPengumumanRingkas(); return; }
+    if (!antrean.length) { totalAntrean = 0; if (dlg.open) dlg.close(); renderPengumumanRingkas(); lanjutkanAjakan(); return; }
     const p = antrean[0];
     const ke = totalAntrean - antrean.length + 1;
     $('#umum-urutan').textContent = totalAntrean > 1 ? 'Pengumuman ' + ke + ' dari ' + totalAntrean : 'Pengumuman';
@@ -663,6 +705,7 @@
     $('#dlg-semua').showModal();
   }
   $('#semua-tutup').addEventListener('click', () => $('#dlg-semua').close());
+  $('#dlg-semua').addEventListener('close', () => lanjutkanAjakan());
   ['#sisi-umum', '#kepala-umum', '#kartu-umum'].forEach((s) => $(s).addEventListener('click', bukaSemuaPengumuman));
 
   /* ===================== Keluar ===================== */
@@ -751,27 +794,86 @@
     bukaApp(t.id, { extra: t.extra, otomatis: true });
   }
 
-  /* ===================== Pasang ke perangkat ===================== */
+  /* ===================== Instal ke perangkat ===================== */
+  const TUJUH_HARI = 7 * 24 * 3600 * 1000;
   let promptPasang = null;
-  const sudahTerpasang = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  let ajakanDiminta = false;   // sudah login, ajakan boleh muncul di pemuatan halaman ini
+  let ajakanSudah = false;     // ajakan sudah tampil di pemuatan halaman ini
+  let ajakanTertunda = false;  // menunggu pop-up lain selesai
   const iOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); promptPasang = e; $('#pasang').hidden = false; });
-  $('#pasang').addEventListener('click', async () => {
-    if (!promptPasang) return;
-    promptPasang.prompt();
-    try { await promptPasang.userChoice; } catch (e) { /* abaikan */ }
+  const ponsel = iOS || /android|mobile/i.test(navigator.userAgent);
+  function sudahTerpasang() {
+    return ['standalone', 'fullscreen', 'window-controls-overlay'].some((m) => window.matchMedia('(display-mode: ' + m + ')').matches) ||
+      window.navigator.standalone === true || document.referrer.indexOf('android-app://') === 0;
+  }
+  function isiAjakan() {
+    const mode = iOS ? 'ios' : (promptPasang ? 'tombol' : 'manual');
+    $('#instal-ios').hidden = mode !== 'ios';
+    $('#instal-manual').hidden = mode !== 'manual';
+    $('#instal-ya').hidden = mode !== 'tombol';
+  }
+  function perbaruiTombolInstal() {
+    $('#pasang').hidden = !promptPasang || sudahTerpasang();
+    if ($('#dlg-instal').open) isiAjakan();
+  }
+  function bolehAjak() {
+    if (!S.sesi || sudahTerpasang() || simpan.ambil(KUNCI.terinstal)) return false;
+    if (Date.now() < (Number(simpan.ambil(KUNCI.instalNanti)) || 0)) return false;
+    return ponsel || !!promptPasang;   // di laptop hanya bila browser bisa menginstal
+  }
+  function ajakInstal() {
+    ajakanDiminta = true;
+    if (ajakanSudah || !bolehAjak()) return;
+    if (document.querySelector('dialog[open]')) { ajakanTertunda = true; return; }
+    ajakanTertunda = false;
+    ajakanSudah = true;
+    isiAjakan();
+    $('#dlg-instal').showModal();
+  }
+  function lanjutkanAjakan() {
+    if (ajakanTertunda) setTimeout(ajakInstal, 250);
+  }
+  function nantiSaja() {
+    simpan.taruh(KUNCI.instalNanti, Date.now() + TUJUH_HARI);
+    if ($('#dlg-instal').open) $('#dlg-instal').close();
+  }
+  async function jalankanInstal() {
+    if (!promptPasang) { isiAjakan(); return; }
+    const p = promptPasang;
     promptPasang = null;
-    $('#pasang').hidden = true;
+    p.prompt();
+    let hasil = null;
+    try { hasil = await p.userChoice; } catch (e) { /* abaikan */ }
+    if ($('#dlg-instal').open) $('#dlg-instal').close();
+    if (!hasil || hasil.outcome !== 'accepted') simpan.taruh(KUNCI.instalNanti, Date.now() + TUJUH_HARI);
+    perbaruiTombolInstal();
+  }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    promptPasang = e;
+    simpan.hapus(KUNCI.terinstal);   // browser hanya menawarkan instal bila belum terinstal
+    perbaruiTombolInstal();
+    if (ajakanDiminta) ajakInstal();
   });
-  window.addEventListener('appinstalled', () => { $('#pasang').hidden = true; toast('Portal terpasang. Buka dari layar utama.'); });
-  if (iOS && !sudahTerpasang) $('#petunjuk-ios').hidden = false;
+  window.addEventListener('appinstalled', () => {
+    simpan.taruh(KUNCI.terinstal, true);
+    promptPasang = null;
+    if ($('#dlg-instal').open) $('#dlg-instal').close();
+    perbaruiTombolInstal();
+    toast('Aplikasi terinstal. Buka dari layar utama.');
+  });
+  $('#pasang').addEventListener('click', jalankanInstal);
+  $('#instal-ya').addEventListener('click', jalankanInstal);
+  $('#instal-nanti').addEventListener('click', nantiSaja);
+  $('#dlg-instal').addEventListener('cancel', (e) => { e.preventDefault(); nantiSaja(); });
+  if (iOS && !sudahTerpasang()) $('#petunjuk-ios').hidden = false;
 
   /* ===================== Mulai ===================== */
   function mulai() {
     document.title = K.NAMA;
     $$('.nama-portal').forEach((x) => { x.textContent = K.NAMA; });
     $('#merek-alamat').textContent = location.host;
-    $('#versi').textContent = K.VERSI ? 'Versi ' + K.VERSI : '';
+    $('#versi').textContent = 'Versi ' + VERSI_KODE;
     bacaTautanAwal();
 
     const s = simpan.ambil(KUNCI.sesi);
@@ -794,6 +896,7 @@
       if (!ok) return;
       tampilPortal();
       bukaTautanAwal();
+      ajakInstal();
     });
   }
 

@@ -33,6 +33,7 @@
     <symbol id="i-keluar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></g></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></g></symbol>
     <symbol id="i-silang" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></g></symbol>
+    <symbol id="i-bagikan" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></g></symbol>
     <symbol id="i-iris" viewBox="0 0 200 200">
       <circle cx="100" cy="100" r="72" fill="#1F7A8C"/>
       <circle cx="100" cy="100" r="47" fill="none" stroke="#4B98A6" stroke-width="44" stroke-dasharray="1.2 4"/>
@@ -175,15 +176,15 @@
         <p class="kosong" id="rak-kosong" hidden>Belum ada aplikasi untuk akun Anda. Hubungi admin Hub bila ini keliru.</p>
 
         <div class="bawah">
-          <button type="button" class="tombol" id="pasang" hidden>Pasang portal di perangkat ini</button>
-          <p class="petunjuk-ios" id="petunjuk-ios" hidden>Untuk memasang di iPhone: ketuk tombol Bagikan di Safari, lalu pilih “Tambah ke Layar Utama”.</p>
+          <button type="button" class="tombol" id="pasang" hidden>Instal aplikasi di perangkat ini</button>
+          <p class="petunjuk-ios" id="petunjuk-ios" hidden>Untuk menginstal di iPhone: ketuk Bagikan, lalu pilih “Tambahkan ke Layar Utama”.</p>
           <p class="versi" id="versi"></p>
         </div>
       </div>
     </section>
 
     <!-- Layar aplikasi -->
-    <section id="layar-app" class="layar-app" hidden>
+    <section id="layar-app" class="layar-app" inert aria-hidden="true">
       <div class="bilah">
         <button type="button" class="tombol-ikon bilah-kembali" id="app-kembali" aria-label="Kembali ke beranda">
           <svg><use href="#i-kiri"/></svg>
@@ -243,6 +244,27 @@
     <button type="button" class="tombol utama" data-keluar="ini">Keluar dari perangkat ini</button>
     <button type="button" class="tombol" data-keluar="semua">Keluar dari semua perangkat</button>
     <button type="button" class="tombol polos" data-keluar="batal">Batal</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-instal" class="dialog kecil" aria-labelledby="instal-judul">
+  <div class="dialog-isi">
+    <img class="instal-ikon" src="icon-192.png" alt="" width="56" height="56">
+    <h2 class="dialog-judul" id="instal-judul">Buka portal dari layar utama</h2>
+    <p class="dialog-teks">Semua aplikasi tinggal satu ketukan, tanpa mengetik alamat atau membuka browser.</p>
+    <ol class="langkah" id="instal-ios" hidden>
+      <li>Ketuk <strong>Bagikan</strong> <svg class="langkah-ikon" aria-label="ikon Bagikan"><use href="#i-bagikan"/></svg> di Safari.</li>
+      <li>Pilih <strong>Tambahkan ke Layar Utama</strong>.</li>
+      <li>Ketuk <strong>Tambah</strong> di pojok kanan atas.</li>
+    </ol>
+    <ol class="langkah" id="instal-manual" hidden>
+      <li>Ketuk menu <strong>⋮</strong> di pojok kanan atas browser.</li>
+      <li>Pilih <strong>Instal aplikasi</strong> atau <strong>Tambahkan ke layar utama</strong>.</li>
+    </ol>
+  </div>
+  <div class="dialog-aksi bertumpuk">
+    <button type="button" class="tombol utama" id="instal-ya">Instal aplikasi di perangkat ini</button>
+    <button type="button" class="tombol polos" id="instal-nanti">Nanti saja</button>
   </div>
 </dialog>
 
